@@ -2345,10 +2345,15 @@
         await signInWithEmailAndPassword(auth, $("login-email").value.trim(), $("login-password").value);
         $("login-password").value = "";
       } catch (ex) {
-        // Deliberately generic: don't reveal whether an email exists
-        err.textContent = ex.code === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and retry."
-          : ex.code === "auth/network-request-failed" ? "Network error. Check your connection."
-          : "Invalid email or password.";
+        console.error("Sign-in failed:", ex.code, ex.message);
+        const c = ex.code || "";
+        // Credential errors stay generic (don't reveal whether an email exists); config errors are shown clearly.
+        err.textContent = c === "auth/too-many-requests" ? "Too many attempts. Wait a few minutes and retry."
+          : c === "auth/network-request-failed" ? "Network error. Check your connection."
+          : c === "auth/operation-not-allowed" ? "Email/Password sign-in is not enabled in Firebase Console."
+          : /referer|api-key|app-not-authorized|unauthorized-domain/.test(c) ? "This site is blocked by the API key / authorized-domain settings (" + c + ")."
+          : ["auth/invalid-credential", "auth/wrong-password", "auth/user-not-found", "auth/invalid-email", "auth/missing-password"].includes(c) ? "Invalid email or password."
+          : "Sign-in failed (" + (c || "unknown error") + "). Check the browser console.";
         err.classList.remove("hidden");
       } finally { btn.disabled = false; }
     });
