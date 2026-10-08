@@ -432,7 +432,7 @@
           </button>
           
           <button onclick="openAddLead()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
-            <i class="fa-solid fa-plus"></i> Add Sponsor Prospect
+            <i class="fa-solid fa-plus"></i> Add Sponsor Prospect <span id="lead-count-label" class="opacity-70 font-semibold"></span>
           </button>
         </div>
       </div>
@@ -1047,6 +1047,7 @@
     ];
     const defaultCats = ['Venue & Stage', 'Food & Catering', 'Sound & AV Tech', 'Printing & Marketing', 'Prizes & Shields', 'Miscellaneous'];
     const defaultNotes = [{ id: 'n_1', text: 'Confirm auditorium booking letter with the department head', kind: 'Requirement', priority: 'High', created: Date.now(), done: false }];
+    const MAX_LEADS = 30;
     const tierValue = n => { const t = S().tiers.find(x => x.name === n); return t ? t.value : 50000; };
 
     // Initialization
@@ -1261,7 +1262,7 @@
       const existingIdx = window.appState.leads.findIndex(l => l.company.toLowerCase() === company.toLowerCase());
       if (existingIdx !== -1) {
         if (window.appState.leads[existingIdx].status !== 'Closed-Won') window.appState.leads[existingIdx].status = 'Meeting Scheduled';
-      } else {
+      } else if (window.appState.leads.length < MAX_LEADS) {
         window.appState.leads.unshift({
           id: 'lead_' + Date.now(),
           company,
@@ -1299,6 +1300,9 @@
         const matchesStatus = statusFilter === 'ALL' || l.status === statusFilter;
         return matchesSearch && matchesStatus;
       });
+
+      const countLabel = document.getElementById('lead-count-label');
+      if (countLabel) countLabel.textContent = '(' + (window.appState.leads || []).length + '/' + MAX_LEADS + ')';
 
       const tbody = document.getElementById('leads-table-body');
       tbody.innerHTML = '';
@@ -1405,6 +1409,10 @@
     function handleSaveLead(e) {
       e.preventDefault();
       const id = document.getElementById('lead-id').value;
+      if (!id && window.appState.leads.length >= MAX_LEADS) {
+        showToast('Pipeline is full (' + MAX_LEADS + ' sponsors max).', 'warning');
+        return;
+      }
       const company = document.getElementById('lead-company').value.trim();
       const tier = document.getElementById('lead-tier').value;
       const value = parseFloat(document.getElementById('lead-value').value) || 0;
@@ -1451,6 +1459,10 @@
 
     // FIX: opens the lead modal in "add" mode (clears the hidden lead-id left over from editLead)
     function openAddLead() {
+      if ((window.appState.leads || []).length >= MAX_LEADS) {
+        showToast('Pipeline is full (' + MAX_LEADS + ' sponsors max). Delete a lead to add a new one.', 'warning');
+        return;
+      }
       document.getElementById('lead-form').reset();
       document.getElementById('lead-id').value = '';
       document.getElementById('modal-lead-title').innerHTML =
@@ -1767,7 +1779,7 @@
       let lead = window.appState.leads.find(l => l.company.toLowerCase() === meeting.company.toLowerCase());
       if (lead) {
         lead.status = 'Closed-Won';
-      } else {
+      } else if (window.appState.leads.length < MAX_LEADS) {
         window.appState.leads.unshift({
           id: 'lead_' + Date.now(),
           company: meeting.company,
@@ -2135,6 +2147,7 @@
 
       lines.forEach((line, idx) => {
         if (idx === 0 && line.toLowerCase().includes('company')) return;
+        if (window.appState.leads.length >= MAX_LEADS) return;
         const parts = line.split(',').map(s => s.trim().replace(/^"|"$/g, ''));
         if (parts.length >= 2 && parts[0]) {
           window.appState.leads.unshift({
