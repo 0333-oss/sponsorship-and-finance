@@ -431,7 +431,7 @@
             <i class="fa-solid fa-table-columns"></i> <span id="view-mode-text">Kanban View</span>
           </button>
           
-          <button onclick="openModal('add-lead-modal')" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
+          <button onclick="openAddLead()" class="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-lg shadow-indigo-600/30 flex items-center gap-2">
             <i class="fa-solid fa-plus"></i> Add Sponsor Prospect
           </button>
         </div>
@@ -1446,6 +1446,16 @@
       document.getElementById('lead-followup').value = lead.followup || '';
       document.getElementById('lead-notes').value = lead.notes || '';
 
+      openModal('add-lead-modal');
+    }
+
+    // FIX: opens the lead modal in "add" mode (clears the hidden lead-id left over from editLead)
+    function openAddLead() {
+      document.getElementById('lead-form').reset();
+      document.getElementById('lead-id').value = '';
+      document.getElementById('modal-lead-title').innerHTML =
+        '<i class="fa-solid fa-building-circle-check text-indigo-400"></i> Add New Sponsor Prospect';
+      fillSelects();
       openModal('add-lead-modal');
     }
 
